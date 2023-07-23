@@ -32,13 +32,11 @@ class App {
     }
 
     async startBrowser() {
-        const browser = await puppeteer.launch({ headless: false, defaultViewport: null, args: ['--start-maximized'] })
+        const browser = await puppeteer.launch({ headless: true, defaultViewport: null, args: ['--start-maximized'] })
 
         const page = await browser.newPage();
 
         await page.goto("https://pwhr.darwinbox.in/");
-
-        // await page.waitForNavigation();
 
         return { browser, page };
     }
@@ -113,7 +111,6 @@ class App {
         if (areDaysLeft) {
             await this.attendance();
         }
-
         console.log("Marked attendance for all days.");
 
         await this.cleanup();
