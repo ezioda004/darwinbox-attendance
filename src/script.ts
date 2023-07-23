@@ -98,7 +98,7 @@ class App {
                 reason.click();
 
                 const attendanceMessage = document.querySelector("#AttendanceRequestForm_message") as HTMLTextAreaElement;
-                attendanceMessage.value = "Test";
+                attendanceMessage.value = "Missed punch";
 
                 const submitBtn = document.querySelector("#add_request_btn") as HTMLInputElement;
                 submitBtn.click();
