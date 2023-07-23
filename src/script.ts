@@ -18,6 +18,7 @@ class App {
         this.page = page;
         await this.login(userName, password);
         await this.attendance();
+        await this.cleanup();
     }
 
     async getUserInput() {
@@ -26,7 +27,7 @@ class App {
             output: process.stdout
         });
 
-        const userName = await rl.question("Enter your username: ");
+        const userName = await rl.question("Enter your email: ");
         const password = await rl.question("Enter your password: ");
         return { userName, password };
     }
@@ -67,7 +68,7 @@ class App {
         await this.page.waitForSelector(".odd");
         await this.page.waitForSelector(".even");
 
-        const areDaysLeft = await this.page.evaluate(async () => {
+        const areDaysLeft = await this.page.evaluate(async () => { // Runs in the browser context
             function sleep(time: number) {
                 return new Promise((resolve) => {
                     setTimeout(resolve, time);
@@ -80,14 +81,12 @@ class App {
             const even = document.querySelectorAll(".even");
             const days = [...odd, ...even];
 
-            // const absentDays = this.getAbsentDays();
-
             const absentDays = days.filter(day => day.classList.contains(attendanceColor) && !day.classList.contains(alreadyRequestedColor));
             
-            if (absentDays.length === 0) {
+            if (absentDays.length === 0) { // base condition for recursion
                 return false;
             }
-            console.log(absentDays);
+
             for await (const day of absentDays) {
                 console.log("day", day);
                 day.getElementsByTagName("a")[0].click();
@@ -106,19 +105,18 @@ class App {
             return true;
         });
 
-        console.log("Submitted attendance for a day");
+        console.log("Submitted attendance for a day...");
 
         if (areDaysLeft) {
             await this.attendance();
         }
-        console.log("Marked attendance for all days.");
-
-        await this.cleanup();
+        console.log("Marked attendance for all days...");
     }
 
     async cleanup() {
         console.log("Cleaning up...");
         await this.browser.close();
+        console.log("Bye.")
         process.exit(0);
     }
 
