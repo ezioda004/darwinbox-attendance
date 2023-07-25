@@ -1,23 +1,20 @@
 import * as readline from "node:readline/promises";
 import puppeteer from "puppeteer";
 
-
 class App {
 
     page!: puppeteer.Page;
     browser!: puppeteer.Browser;
 
-    constructor() {
-        this.main();
+    async requestAttendance() {
+        await this.getInputAndLogin();
+        await this.startRequestAttendance();
+        await this.cleanup();
     }
 
-    async main() {
-        const { userName, password } = await this.getUserInput();
-        const { browser, page } = await this.startBrowser();
-        this.browser = browser;
-        this.page = page;
-        await this.login(userName, password);
-        await this.attendance();
+    async approveAttendance() {
+        await this.getInputAndLogin();
+        await this.startApproveAttendance();
         await this.cleanup();
     }
 
@@ -27,13 +24,15 @@ class App {
             output: process.stdout
         });
 
-        const userName = await rl.question("Enter your email: ");
-        const password = await rl.question("Enter your password: ");
+        const userName = 'supreet.singh2@pw.live'; 
+        //await rl.question("Enter your email: ");
+        const password = 'LqGAehLHsBnA42N@@';
+        // await rl.question("Enter your password: ");
         return { userName, password };
     }
 
     async startBrowser() {
-        const browser = await puppeteer.launch({ headless: "new", defaultViewport: null, args: ['--start-maximized'] })
+        const browser = await puppeteer.launch({ headless: false, defaultViewport: null, args: ['--start-maximized'] })
 
         const page = await browser.newPage();
 
@@ -42,7 +41,11 @@ class App {
         return { browser, page };
     }
 
-    async login(userName: string, password: string) {
+    async getInputAndLogin() {
+        const { userName, password } = await this.getUserInput();
+        const { browser, page } = await this.startBrowser();
+        this.browser = browser;
+        this.page = page;
         console.log("Logging in.")
         const usernameEl = await this.page.waitForSelector(".username-field");
         const passwordEl = await this.page.waitForSelector(".password-field");
@@ -61,7 +64,7 @@ class App {
         console.log("Logged in...")
     }
 
-    async attendance() {
+    async startRequestAttendance() {
         console.log("Finding absent days...");
         await this.page.goto("https://pwhr.darwinbox.in/attendance/index/index/view/list", { waitUntil: "networkidle2" });
 
@@ -108,9 +111,31 @@ class App {
         console.log("Submitted attendance for a day...");
 
         if (areDaysLeft) {
-            await this.attendance();
+            await this.startRequestAttendance();
         }
         console.log("Marked attendance for all days...");
+    }
+
+    async startApproveAttendance() {
+        console.log('this scope', this);
+        await this.page.goto("https://pwhr.darwinbox.in/tasksApi/GetTasks", { waitUntil: "networkidle2" });
+        await this.page.waitForSelector(".requestDiv");
+        await this.page.evaluate(async () => { // Runs in the browser context
+            console.log("Finding pending approvals...");
+            const attendanceContainers = document.querySelectorAll('.requestDiv');
+            for(let attendance of attendanceContainers) {
+                const isAttendanceRequest = attendance.querySelectorAll('.reqType a')[0] as HTMLAnchorElement;
+                // isAttendanceRequest.innerText === 'Attendance Request';
+                if(isAttendanceRequest?.innerText === 'Attendance Request') {
+                    const approveBtns = attendance.querySelectorAll('.btn-secondary-approve');
+                    for(const approveBtn of approveBtns) {
+                        if (approveBtn instanceof HTMLAnchorElement) { 
+                            approveBtn.click();
+                        }
+                    }
+                }
+            }
+        });
     }
 
     async cleanup() {
@@ -122,5 +147,17 @@ class App {
 
 }
 
-
 const app = new App();
+
+const processVar = process.argv;
+processVar.forEach((value, index) => {
+    console.log('value', value);
+    if(processVar[2] === 'approve') {
+        app.approveAttendance(); // For approval
+    } else if(processVar[2] === 'request') {
+        app.requestAttendance(); // For requesting attendance
+    } else {
+        throw new Error('Kya kar raha hai be!');
+    }
+    console.log(index, value);
+});
