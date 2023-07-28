@@ -12,12 +12,6 @@ class App {
         await this.cleanup();
     }
 
-    sleep(time: number) {
-        return new Promise((resolve) => {
-            setTimeout(resolve, time);
-        });
-    }
-
     async approveAttendance() {
         try {
             await this.getInputAndLogin();
@@ -95,11 +89,17 @@ class App {
                 return false;
             }
 
+            function sleep(time: number) {
+                return new Promise((resolve) => {
+                    setTimeout(resolve, time);
+                });
+            }
+
             for await (const day of absentDays) {
                 console.log("day", day);
                 day.getElementsByTagName("a")[0].click();
 
-                await this.sleep(5000);
+                await sleep(5000);
 
                 const reason = document.querySelector(".item[data-value='a632bfc73cd1d8']") as HTMLDivElement;
                 reason.click();
