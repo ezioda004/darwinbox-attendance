@@ -12,10 +12,20 @@ class App {
         await this.cleanup();
     }
 
+    sleep(time: number) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, time);
+        });
+    }
+
     async approveAttendance() {
-        await this.getInputAndLogin();
-        await this.startApproveAttendance();
-        await this.cleanup();
+        try {
+            await this.getInputAndLogin();
+            await this.startApproveAttendance();
+            await this.cleanup();
+        } catch(e) {
+            console.error('Fatt gya bro', e);
+        }
     }
 
     async getUserInput() {
@@ -72,11 +82,6 @@ class App {
         await this.page.waitForSelector(".even");
 
         const areDaysLeft = await this.page.evaluate(async () => { // Runs in the browser context
-            function sleep(time: number) {
-                return new Promise((resolve) => {
-                    setTimeout(resolve, time);
-                });
-            }
 
             const attendanceColor = "#f44336";
             const alreadyRequestedColor = "#999999";
@@ -94,7 +99,7 @@ class App {
                 console.log("day", day);
                 day.getElementsByTagName("a")[0].click();
 
-                await sleep(5000);
+                await this.sleep(5000);
 
                 const reason = document.querySelector(".item[data-value='a632bfc73cd1d8']") as HTMLDivElement;
                 reason.click();
@@ -120,6 +125,7 @@ class App {
         console.log('this scope', this);
         await this.page.goto("https://pwhr.darwinbox.in/tasksApi/GetTasks", { waitUntil: "networkidle2" });
         await this.page.waitForSelector(".requestDiv");
+        // await this.sleep(3000);
         await this.page.evaluate(async () => { // Runs in the browser context
             console.log("Finding pending approvals...");
             const attendanceContainers = document.querySelectorAll('.requestDiv');
@@ -150,14 +156,13 @@ class App {
 const app = new App();
 
 const processVar = process.argv;
+console.log('processVar', processVar);
 processVar.forEach((value, index) => {
-    console.log('value', value);
-    if(processVar[2] === 'approve') {
+    console.log('value', value, 'index', index);
+    if(processVar[index] === 'approve') {
         app.approveAttendance(); // For approval
-    } else if(processVar[2] === 'request') {
+    } else if(processVar[index] === 'request') {
         app.requestAttendance(); // For requesting attendance
-    } else {
-        throw new Error('Kya kar raha hai be!');
-    }
+    } 
     console.log(index, value);
 });
