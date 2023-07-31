@@ -63,7 +63,11 @@ class App {
 
     async attendance() {
         console.log("Finding absent days...");
-        await this.page.goto("https://pwhr.darwinbox.in/attendance/index/index/view/list", { waitUntil: "networkidle2" });
+
+        await Promise.all([
+            this.page.goto("https://pwhr.darwinbox.in/attendance/index/index/view/list", { waitUntil: "networkidle2" }),
+            this.page.waitForNavigation()
+        ]);
 
         await this.page.waitForSelector(".odd");
         await this.page.waitForSelector(".even");
@@ -101,8 +105,8 @@ class App {
 
                 const submitBtn = document.querySelector("#add_request_btn") as HTMLInputElement;
                 submitBtn.click();
+                return true;
             }
-            return true;
         });
 
         console.log("Submitted attendance for a day...");
