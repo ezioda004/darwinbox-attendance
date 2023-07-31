@@ -80,7 +80,11 @@ class App {
         await this.page.waitForSelector(".even");
 
         const areDaysLeft = await this.page.evaluate(async () => { // Runs in the browser context
-
+            function sleep(time: number) {
+                return new Promise((resolve) => {
+                    setTimeout(resolve, time);
+                });
+            }
             const attendanceColor = "#f44336";
             const alreadyRequestedColor = "#999999";
             const odd = document.querySelectorAll(".odd");
@@ -91,12 +95,6 @@ class App {
             
             if (absentDays.length === 0) { // base condition for recursion
                 return false;
-            }
-
-            function sleep(time: number) {
-                return new Promise((resolve) => {
-                    setTimeout(resolve, time);
-                });
             }
 
             for await (const day of absentDays) {
@@ -160,13 +158,10 @@ class App {
 const app = new App();
 
 const processVar = process.argv;
-console.log('processVar', processVar);
 processVar.forEach((value, index) => {
-    console.log('value', value, 'index', index);
     if(processVar[index] === 'approve') {
         app.approveAttendance(); // For approval
     } else if(processVar[index] === 'request') {
         app.requestAttendance(); // For requesting attendance
     } 
-    console.log(index, value);
 });

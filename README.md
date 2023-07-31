@@ -9,5 +9,6 @@ Node 20.0.0 >=
 ```
 npm ci
 npm run build
-npm run start
+npm run start:request #For requesting
+npm run start:approve #For approving
 ```
