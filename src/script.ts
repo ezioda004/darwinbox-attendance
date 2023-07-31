@@ -28,10 +28,10 @@ class App {
             output: process.stdout
         });
 
-        const userName = 'supreet.singh2@pw.live'; 
-        //await rl.question("Enter your email: ");
-        const password = 'LqGAehLHsBnA42N@@';
-        // await rl.question("Enter your password: ");
+        // const userName = 'supreet.singh2@pw.live'; 
+        const userName = await rl.question("Enter your email: ");
+        // const password = 'potato';
+        const password = await rl.question("Enter your password: ");
         return { userName, password };
     }
 
