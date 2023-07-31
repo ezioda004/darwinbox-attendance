@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --project ./",
-    "start": "node ./dist/script.js"
+    "start:approve": "node ./dist/script.js approve",
+    "start:request": "node ./dist/script.js request"
   },
   "type": "module",
   "keywords": [],
