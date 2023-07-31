@@ -36,7 +36,7 @@ class App {
     }
 
     async startBrowser() {
-        const browser = await puppeteer.launch({ headless: false, defaultViewport: null, args: ['--start-maximized'] })
+        const browser = await puppeteer.launch({ headless: "new", defaultViewport: null, args: ['--start-maximized'] })
 
         const page = await browser.newPage();
 
