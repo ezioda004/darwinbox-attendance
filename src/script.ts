@@ -8,13 +8,15 @@ class App {
 
     async requestAttendance() {
         await this.getInputAndLogin();
+        await this.viewSignOff();
         await this.startRequestAttendance();
         await this.cleanup();
     }
-
+    
     async approveAttendance() {
         try {
             await this.getInputAndLogin();
+            await this.viewSignOff();
             await this.startApproveAttendance();
             await this.cleanup();
         } catch(e) {
@@ -66,6 +68,14 @@ class App {
 
         await this.page.waitForNavigation();
         console.log("Logged in...")
+    }
+
+    async viewSignOff(){
+        const signOffBtn = "view_sign";
+        const docSignBtn = "docu_sign_btn";
+
+        await this.page.waitForSelector(signOffBtn);
+        await this.page.waitForSelector(docSignBtn);
     }
 
     async startRequestAttendance() {
