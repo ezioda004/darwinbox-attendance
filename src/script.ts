@@ -71,11 +71,18 @@ class App {
     }
 
     async viewSignOff(){
-        const signOffBtn = "view_sign";
-        const docSignBtn = "docu_sign_btn";
-
-        await this.page.waitForSelector(signOffBtn);
-        await this.page.waitForSelector(docSignBtn);
+        const docSignBtn = ".docu_sign_btn";
+        const signOffBtn = ".view_sign";
+        
+        try{
+            await this.page.click(signOffBtn);
+            console.log('Pending Policies for Sign-Off found !!!!');
+            console.log('Singning them off !!!!');
+            await this.page.click(docSignBtn);
+        }
+        catch(error){
+            console.log('No Pending Policies for Sign-Off found !!!!');
+        } 
     }
 
     async startRequestAttendance() {
