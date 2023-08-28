@@ -8,13 +8,15 @@ class App {
 
     async requestAttendance() {
         await this.getInputAndLogin();
+        await this.viewSignOff();
         await this.startRequestAttendance();
         await this.cleanup();
     }
-
+    
     async approveAttendance() {
         try {
             await this.getInputAndLogin();
+            await this.viewSignOff();
             await this.startApproveAttendance();
             await this.cleanup();
         } catch(e) {
@@ -66,6 +68,21 @@ class App {
 
         await this.page.waitForNavigation();
         console.log("Logged in...")
+    }
+
+    async viewSignOff(){
+        const docSignBtn = ".docu_sign_btn";
+        const signOffBtn = ".view_sign";
+        
+        try{
+            await this.page.click(signOffBtn);
+            console.log('Pending Policies for Sign-Off found !!!!');
+            console.log('Singning them off !!!!');
+            await this.page.click(docSignBtn);
+        }
+        catch(error){
+            console.log('No Pending Policies for Sign-Off found !!!!');
+        } 
     }
 
     async startRequestAttendance() {
