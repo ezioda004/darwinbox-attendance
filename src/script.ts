@@ -1,5 +1,6 @@
 import * as readline from "node:readline/promises";
 import puppeteer from "puppeteer";
+import "dotenv/config";
 
 class App {
 
@@ -9,17 +10,18 @@ class App {
     async requestAttendance() {
         await this.getInputAndLogin();
         await this.viewSignOff();
-        await this.startRequestAttendance();
+        await this.startRequestAttendance(false);
+        await this.startRequestAttendance(true);
         await this.cleanup();
     }
-    
+
     async approveAttendance() {
         try {
             await this.getInputAndLogin();
             await this.viewSignOff();
             await this.startApproveAttendance();
             await this.cleanup();
-        } catch(e) {
+        } catch (e) {
             console.error('Fatt gya bro', e);
         }
     }
@@ -30,15 +32,14 @@ class App {
             output: process.stdout
         });
 
-        // const userName = 'supreet.singh2@pw.live'; 
-        const userName = await rl.question("Enter your email: ");
-        // const password = 'potato';
-        const password = await rl.question("Enter your password: ");
+        const userName = process.env.EMAIL_ID ?? await rl.question("Enter your email: ");
+        const password = process.env.PASSWORD ?? await rl.question("Enter your password: ");
+        console.log("userName", userName);
         return { userName, password };
     }
 
     async startBrowser() {
-        const browser = await puppeteer.launch({ headless: "new", defaultViewport: null, args: ['--start-maximized'] })
+        const browser = await puppeteer.launch({ headless: "new", devtools: false, defaultViewport: null, args: ['--start-maximized'] })
 
         const page = await browser.newPage();
 
@@ -70,23 +71,23 @@ class App {
         console.log("Logged in...")
     }
 
-    async viewSignOff(){
+    async viewSignOff() {
         const docSignBtn = ".docu_sign_btn";
         const signOffBtn = ".view_sign";
-        
-        try{
+
+        try {
             await this.page.click(signOffBtn);
             console.log('Pending Policies for Sign-Off found !!!!');
             console.log('Singning them off !!!!');
             await this.page.click(docSignBtn);
         }
-        catch(error){
+        catch (error) {
             console.log('No Pending Policies for Sign-Off found !!!!');
-        } 
+        }
     }
 
-    async startRequestAttendance() {
-        console.log("Finding absent days...");
+    async startRequestAttendance(checkPreviousMonth: boolean) {
+        console.log("Finding absent days...", "checkPreviousMonth", checkPreviousMonth);
 
         await Promise.all([
             this.page.goto("https://pwhr.darwinbox.in/attendance/index/index/view/list", { waitUntil: "networkidle2" }),
@@ -96,20 +97,39 @@ class App {
         await this.page.waitForSelector(".odd");
         await this.page.waitForSelector(".even");
 
-        const areDaysLeft = await this.page.evaluate(async () => { // Runs in the browser context
+        const areDaysLeft = await this.page.evaluate(async (checkPreviousMonth) => { // Runs in the browser context
             function sleep(time: number) {
                 return new Promise((resolve) => {
                     setTimeout(resolve, time);
                 });
             }
+            if (checkPreviousMonth) {
+                const monthDropDown = document.querySelector(".drop_month") as HTMLSelectElement;
+                console.log("monthDropDown", monthDropDown, monthDropDown.value);
+                const monthString = monthDropDown.value;
+                const monthStringArr = monthString.split("-");
+                const prevMonth = Number(monthStringArr[1]) - 1;
+                const prevMonthString = monthStringArr[0] + "-" + "0" + prevMonth;
+                console.log("prevMonthString", prevMonthString);
+                monthDropDown.value = prevMonthString;
+                monthDropDown.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log("Waiting for 5 seconds...");
+                await sleep(5000);
+                console.log("Waited for 5 seconds...");
+            }
+            
             const attendanceColor = "#f44336";
             const alreadyRequestedColor = "#999999";
             const odd = document.querySelectorAll(".odd");
             const even = document.querySelectorAll(".even");
             const days = [...odd, ...even];
 
-            const absentDays = days.filter(day => day.classList.contains(attendanceColor) && !day.classList.contains(alreadyRequestedColor));
-            
+            console.log("days", days);
+
+            const absentDays = days.filter(day => day.classList.contains(attendanceColor) && !day.classList.contains(alreadyRequestedColor) && day.getElementsByTagName("img").length !== 0);
+
+            console.log("absentDays", absentDays);
+
             if (absentDays.length === 0) { // base condition for recursion
                 return false;
             }
@@ -130,12 +150,12 @@ class App {
                 submitBtn.click();
                 return true;
             }
-        });
+        }, checkPreviousMonth);
 
         console.log("Submitted attendance for a day...");
 
         if (areDaysLeft) {
-            await this.startRequestAttendance();
+            await this.startRequestAttendance(checkPreviousMonth);
         }
         console.log("Marked attendance for all days...");
     }
@@ -148,13 +168,13 @@ class App {
         await this.page.evaluate(async () => { // Runs in the browser context
             console.log("Finding pending approvals...");
             const attendanceContainers = document.querySelectorAll('.requestDiv');
-            for(let attendance of attendanceContainers) {
+            for (let attendance of attendanceContainers) {
                 const isAttendanceRequest = attendance.querySelectorAll('.reqType a')[0] as HTMLAnchorElement;
                 // isAttendanceRequest.innerText === 'Attendance Request';
-                if(isAttendanceRequest?.innerText === 'Attendance Request') {
+                if (isAttendanceRequest?.innerText === 'Attendance Request') {
                     const approveBtns = attendance.querySelectorAll('.btn-secondary-approve');
-                    for(const approveBtn of approveBtns) {
-                        if (approveBtn instanceof HTMLAnchorElement) { 
+                    for (const approveBtn of approveBtns) {
+                        if (approveBtn instanceof HTMLAnchorElement) {
                             approveBtn.click();
                         }
                     }
@@ -176,9 +196,9 @@ const app = new App();
 
 const processVar = process.argv;
 processVar.forEach((value, index) => {
-    if(processVar[index] === 'approve') {
+    if (processVar[index] === 'approve') {
         app.approveAttendance(); // For approval
-    } else if(processVar[index] === 'request') {
+    } else if (processVar[index] === 'request') {
         app.requestAttendance(); // For requesting attendance
-    } 
+    }
 });
