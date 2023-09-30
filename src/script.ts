@@ -39,7 +39,7 @@ class App {
     }
 
     async startBrowser() {
-        const browser = await puppeteer.launch({ headless: "new", devtools: false, defaultViewport: null, args: ['--start-maximized'] })
+        const browser = await puppeteer.launch({ headless: false, devtools: false, defaultViewport: null, args: ['--start-maximized'] })
 
         const page = await browser.newPage();
 
@@ -119,6 +119,7 @@ class App {
             }
             
             const attendanceColor = "#f44336";
+            const unpaidColor = "#960059";
             const alreadyRequestedColor = "#999999";
             const odd = document.querySelectorAll(".odd");
             const even = document.querySelectorAll(".even");
@@ -126,7 +127,10 @@ class App {
 
             console.log("days", days);
 
-            const absentDays = days.filter(day => day.classList.contains(attendanceColor) && !day.classList.contains(alreadyRequestedColor) && day.getElementsByTagName("img").length !== 0);
+            const absentDays = days.filter(day => (day.classList.contains(attendanceColor) || day.classList.contains(unpaidColor)) 
+                                        && !day.classList.contains(alreadyRequestedColor) 
+                                        && day.getElementsByTagName("img").length !== 0
+                                    );
 
             console.log("absentDays", absentDays);
 
@@ -136,9 +140,14 @@ class App {
 
             for await (const day of absentDays) {
                 console.log("day", day);
-                day.getElementsByTagName("a")[0].click();
-
-                await sleep(5000);
+                const isUnpaidDay = day.classList.contains(unpaidColor);
+                if (isUnpaidDay) {
+                    day.getElementsByTagName("a")[1].click();
+                }
+                else { // absent day
+                    day.getElementsByTagName("a")[0].click();
+                }
+                await sleep(5000); // for the modal to open
 
                 const reason = document.querySelector(".item[data-value='a632bfc73cd1d8']") as HTMLDivElement;
                 reason.click();
