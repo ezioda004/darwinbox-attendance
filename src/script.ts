@@ -109,7 +109,7 @@ class App {
                 const monthString = monthDropDown.value;
                 const monthStringArr = monthString.split("-");
                 const prevMonth = Number(monthStringArr[1]) - 1;
-                const prevMonthString = monthStringArr[0] + "-" + "0" + prevMonth;
+                const prevMonthString = monthStringArr[0] + "-" + (prevMonth > 9 ? prevMonth : "0" + prevMonth);
                 console.log("prevMonthString", prevMonthString);
                 monthDropDown.value = prevMonthString;
                 monthDropDown.dispatchEvent(new Event('change', { bubbles: true }));
