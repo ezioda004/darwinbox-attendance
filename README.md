@@ -6,6 +6,8 @@ Node 20.0.0 >=
 
 ## How to use?
 
+* Add email and password in `.env` file and run the below commands
+
 ```
 npm ci
 npm run build
